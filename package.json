@@ -1,0 +1,34 @@
+{
+  "name": "site-graph-app",
+  "version": "1.0.0",
+  "description": "A strict graph-based network source of truth stored in a single site JSON document, designed for both IT operations and on-site technicians.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robcat9199/site-graph-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/robcat9199/site-graph-app/issues"
+  },
+  "homepage": "https://github.com/robcat9199/site-graph-app#readme",
+  "devDependencies": {
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
+  }
+}

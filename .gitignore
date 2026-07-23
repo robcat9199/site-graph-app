@@ -1,0 +1,16 @@
+.DS_Store
+.gemini
+dist/apple-touch-icon.png
+dist/icon.svg
+dist/index.html
+dist/manifest.json
+dist/social-preview.png
+dist/sw.js
+site-graph-app-backup.zip
+/node_modules
+/node_modules
+test-dom.mjs
+test-dist.mjs
+test-dist-script.js
+node_modules/.package-lock.json
+/node_modules

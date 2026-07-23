@@ -1,0 +1,14 @@
+{
+	"name": "SiteGraph",
+	"short_name": "SiteGraph",
+	"description": "Offline network & asset documentation. One HTML file, one JSON file per site, no server.",
+	"start_url": ".",
+	"scope": ".",
+	"display": "standalone",
+	"background_color": "#fffdf8",
+	"theme_color": "#fffdf8",
+	"icons": [
+		{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+		{ "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+	]
+}

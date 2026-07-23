@@ -1,0 +1,747 @@
+/* ---------- topology (navy blueprint) ---------- */
+.topo-wrap {
+	position: relative;
+	height: 100%;
+	background: var(--map-bg);
+	overflow: hidden;
+	user-select: none;
+	-webkit-user-select: none;
+}
+.topo-svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+	cursor: grab;
+	user-select: none;
+	-webkit-user-select: none;
+}
+.topo-svg.panning {
+	cursor: grabbing;
+}
+.topo-controls {
+	position: absolute;
+	top: 0.875rem;
+	left: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3125rem;
+	background: oklch(100% 0 0 / 0.65);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid oklch(0% 0 0 / 0.1);
+	border-radius: 0.375rem;
+	padding: 0.75rem 0.875rem;
+	color: var(--ink);
+	font-size: var(--fs-mono);
+	max-width: 14.375rem;
+
+	& .tc-title {
+		font-family: var(--mono);
+		font-size: var(--fs-caption);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--ink);
+		margin-top: 0.25rem;
+
+		&:first-child {
+			margin-top: 0;
+		}
+	}
+
+	& label {
+		display: flex;
+		align-items: center;
+		gap: 0.4375rem;
+		cursor: pointer;
+		font-size: var(--fs-mono);
+	}
+
+	& .swatch {
+		width: 0.625rem;
+		height: 0.625rem;
+		border-radius: 50%;
+		display: inline-block;
+		flex-shrink: 0;
+	}
+}
+.edge-key {
+	display: flex;
+	align-items: center;
+	gap: 0.4375rem;
+	font-size: var(--fs-note);
+	color: var(--dim);
+	font-family: var(--mono);
+}
+.topo-legendnote {
+	font-size: var(--fs-note);
+	color: var(--ink);
+	border-top: 1px solid oklch(0% 0 0 / 0.1);
+	padding-top: 0.5rem;
+}
+.zoom-controls {
+	position: absolute;
+	bottom: 1rem;
+	left: 1rem;
+	display: flex;
+	gap: 0.375rem;
+}
+.zoom-controls button {
+	width: 1.875rem;
+	height: 1.875rem;
+	background: oklch(100% 0 0 / 0.65);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border: 1px solid oklch(0% 0 0 / 0.1);
+	color: var(--ink);
+	border-radius: 0.25rem;
+	font-size: 0.9375rem;
+	line-height: 1;
+	cursor: pointer;
+}
+@media (hover: hover) {
+	.zoom-controls button:hover {
+		background: oklch(100% 0 0 / 0.12);
+	}
+}
+.topo-msg {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: center;
+	justify-content: center;
+	color: var(--map-dim);
+	font-size: 0.8125rem;
+	text-align: center;
+	padding: 1.25rem;
+}
+.topo-msg .btn {
+	border-color: var(--map-dim);
+	color: var(--map-ink);
+	background: transparent;
+}
+@media (hover: hover) {
+	.topo-msg .btn:hover {
+		background: oklch(100% 0 0 / 0.12);
+		color: oklch(100% 0 0);
+	}
+}
+
+::-webkit-scrollbar {
+	width: 0.5625rem;
+	height: 0.5625rem;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: var(--hair-strong);
+	border-radius: 0.3125rem;
+}
+
+@media print {
+	.header,
+	.nav,
+	.filters-row,
+	.stat-strip,
+	#toasts {
+		display: none !important;
+	}
+	body {
+		display: block;
+		height: auto;
+		background: oklch(100% 0 0);
+	}
+	.content {
+		overflow: visible;
+		height: auto;
+	}
+	thead th {
+		position: static;
+		background: oklch(94% 0 0) !important;
+		color: oklch(0% 0 0);
+	}
+	thead th:first-child,
+	tbody td:first-child {
+		position: static;
+	}
+	tbody td {
+		white-space: normal;
+	}
+	.overlay {
+		display: none !important;
+	}
+}
+/* ---- touch devices at ANY size: phones (both orientations) and tablets ---- */
+
+/* ---------- locations: rack elevations & room cards ---------- */
+.rack-strip {
+	display: flex;
+	gap: 0.875rem;
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+.rack-card {
+	background: var(--surface);
+	border: 1px solid var(--ink);
+	border-radius: 0.375rem;
+	min-width: 16rem;
+	box-shadow: 0.1875rem 0.1875rem 0 var(--shadow);
+	overflow: hidden;
+}
+.rack-card-head {
+	display: flex;
+	align-items: center;
+	gap: 0.4375rem;
+	width: 100%;
+	text-align: left;
+	background: var(--paper);
+	border: none;
+	border-bottom: 1px solid var(--hair-strong);
+	padding: 0.5rem 0.75rem;
+	font-family: var(--mono);
+	font-size: var(--fs-mono);
+	color: var(--ink);
+	cursor: pointer;
+}
+@media (hover: hover) {
+	.rack-card-head:hover b {
+		color: var(--blue);
+		text-decoration: underline;
+	}
+}
+.rack-card-head .spacer {
+	flex: 1;
+}
+.rack-slot {
+	display: grid;
+	grid-template-columns: 2.4rem 1fr auto;
+	gap: 0.5rem;
+	align-items: baseline;
+	width: 100%;
+	text-align: left;
+	background: none;
+	border: none;
+	border-bottom: 1px solid var(--hair);
+	padding: 0.375rem 0.75rem;
+	font-size: var(--fs-control);
+	color: var(--ink);
+	cursor: pointer;
+
+	&:last-child {
+		border-bottom: none;
+	}
+
+	@media (hover: hover) {
+		&:hover {
+			background: var(--blue-soft);
+		}
+	}
+
+	& .u {
+		font-family: var(--mono);
+		font-size: var(--fs-note);
+		color: var(--faint);
+	}
+
+	& .role {
+		color: var(--dim);
+		font-size: var(--fs-note);
+	}
+}
+.rack-empty {
+	padding: 0.75rem;
+	color: var(--faint);
+	font-size: var(--fs-small);
+}
+.room-card {
+	background: var(--surface);
+	border: 1px solid var(--hair-strong);
+	border-radius: 0.375rem;
+	margin-bottom: 0.875rem;
+}
+.room-head {
+	display: flex;
+	align-items: center;
+	gap: 0.625rem;
+	padding: 0.625rem 0.875rem;
+	border-bottom: 1px solid var(--hair);
+	flex-wrap: wrap;
+}
+.room-head .spacer {
+	flex: 1;
+}
+.room-name {
+	font-weight: 600;
+	font-size: var(--fs-body);
+	color: var(--ink);
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+}
+@media (hover: hover) {
+	.room-name:hover {
+		color: var(--blue);
+		text-decoration: underline;
+	}
+}
+.room-sub {
+	display: flex;
+	gap: 0.375rem;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 0.5rem 0.875rem;
+	font-size: var(--fs-small);
+	color: var(--dim);
+	border-bottom: 1px solid var(--hair);
+}
+.chip-link {
+	border: 1px solid var(--hair-strong);
+	background: var(--paper);
+	border-radius: 0.75rem;
+	padding: 0.125rem 0.625rem;
+	font-size: var(--fs-small);
+	color: var(--ink);
+	cursor: pointer;
+}
+@media (hover: hover) {
+	.chip-link:hover {
+		border-color: var(--blue);
+		color: var(--blue);
+	}
+}
+.room-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0 1.5rem;
+	padding: 0.25rem 0.875rem 0.5rem;
+}
+.room-dev {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.75rem;
+	width: 100%;
+	text-align: left;
+	background: none;
+	border: none;
+	border-bottom: 1px dotted var(--hair);
+	padding: 0.375rem 0;
+	font-size: var(--fs-control);
+	color: var(--ink);
+	cursor: pointer;
+}
+@media (hover: hover) {
+	.room-dev:hover {
+		background: var(--blue-soft);
+	}
+}
+
+/* column gear — lives in the header row, far right */
+.th-cols {
+	width: 2rem;
+	text-align: right;
+}
+.td-cols {
+	width: 2rem;
+}
+.col-gear {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: color-mix(in srgb, var(--thead-fg) 65%, transparent);
+	font-size: var(--fs-control);
+	padding: 0.375rem 0.5rem;
+	margin: -0.375rem -0.25rem;
+	line-height: 1;
+}
+@media (hover: hover) {
+	.col-gear:hover,
+	.col-gear:focus-visible {
+		color: var(--thead-fg);
+	}
+}
+th .menu {
+	text-align: left;
+	font-weight: 400;
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+/* the FAB hides exactly where the touch block does NOT apply — the complement must
+   stay in lockstep with the touch media condition or narrow desktop loses search */
+.mobile-search {
+	display: none;
+}
+
+/* menus never hang off-screen */
+.menu {
+	max-width: calc(100vw - 1rem);
+}
+.menu--flip {
+	right: auto;
+	left: 0;
+}
+/* topology legend collapses (details/summary) — closed by default on phones */
+.topo-controls summary {
+	cursor: pointer;
+	font-size: var(--fs-small);
+	font-weight: 600;
+	color: var(--map-ink);
+	list-style-position: inside;
+	user-select: none;
+}
+@media (hover: hover) {
+	.topo-controls summary:hover {
+		color: oklch(100% 0 0);
+	}
+}
+
+
+.flip {
+	padding: 0 0.375rem;
+	font-size: var(--fs-control);
+}
+.flip-row {
+	display: flex;
+	justify-content: center;
+	padding: 0.125rem 0;
+}
+.col-upd {
+	width: 7rem;
+	min-width: 7rem;
+	white-space: nowrap;
+}
+
+/* ---- narrow screens: layout compression only ---- */
+
+
+
+/* P3 Gamut Enhancements */
+@media (color-gamut: p3) {
+	:root {
+		--blue: oklch(0.50 0.28 265);
+		--amber: oklch(0.65 0.25 75);
+		--green: oklch(0.55 0.25 140);
+		--red: oklch(0.55 0.28 25);
+		--violet: oklch(0.55 0.30 295);
+	}
+	[data-theme="dark"] {
+		--blue: oklch(0.75 0.25 265);
+		--amber: oklch(0.80 0.25 75);
+		--green: oklch(0.80 0.25 140);
+		--red: oklch(0.70 0.28 25);
+		--violet: oklch(0.75 0.28 295);
+	}
+}
+
+[data-theme="dark"] .topo-controls,
+[data-theme="dark"] .zoom-controls button {
+	background: oklch(20% 0.05 var(--h-blue) / 0.6);
+	border-color: oklch(100% 0 0 / 0.15);
+	color: var(--ink);
+}
+[data-theme="dark"] .topo-legendnote {
+	border-top-color: oklch(100% 0 0 / 0.15);
+}
+
+
+
+
+
+/* ---------- Consolidated Mobile Overrides ---------- */
+@media (max-width: 47.5em), (hover: none) and (pointer: coarse) {
+	/* edge-to-edge: the DOCUMENT scrolls — Safari minimizes its chrome and content
+     slides under the Dynamic Island and bottom bar. Tables keep their own
+     horizontal rail; the page clips sideways overflow at the root. */
+	html,
+	body,
+	html.framed,
+	html.framed body {
+		height: auto;
+	}
+	body {
+		min-height: 100dvh;
+	}
+	html.framed body {
+		min-height: 0;
+	}
+	html,
+	body {
+		overflow-x: hidden;
+	}
+	.content {
+		overflow: visible;
+	}
+	/* honor every safe-area edge — landscape puts the island on the sides */
+	body {
+		padding-left: env(safe-area-inset-left);
+		padding-right: env(safe-area-inset-right);
+	}
+	.header {
+		padding-top: calc(0.75rem + env(safe-area-inset-top));
+	}
+	/* header & nav backgrounds bleed edge-to-edge through the side insets; content stays inset */
+	.header,
+	.nav {
+		margin-left: calc(-1 * env(safe-area-inset-left));
+		margin-right: calc(-1 * env(safe-area-inset-right));
+	}
+	.header {
+		padding-left: max(1.375rem, env(safe-area-inset-left));
+		padding-right: max(1.375rem, env(safe-area-inset-right));
+	}
+	.nav {
+		padding-left: max(0.75rem, env(safe-area-inset-left));
+		padding-right: max(0.75rem, env(safe-area-inset-right));
+	}
+	.table-pad {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		overscroll-behavior-x: contain;
+		padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
+		scroll-padding-left: env(safe-area-inset-left);
+		min-height: 50vh;
+	}
+	/* the topology map keeps the fixed full-height shell */
+	body:has(.content.map-mode) {
+		height: 100dvh;
+		overflow: hidden;
+	}
+	/* tab strip: horizontal gestures only */
+	.nav {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		overflow-y: hidden;
+		touch-action: pan-x;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+	}
+	.nav::-webkit-scrollbar {
+		display: none;
+	}
+	.tab {
+		padding: 0.75rem 0.6875rem;
+		white-space: nowrap;
+	}
+	.btn,
+	button {
+		min-height: 2.25rem;
+	}
+	.stat-strip button {
+		min-height: 0;
+	}
+	/* no frozen first column on touch — zebra stays uniform, panning stays simple (any orientation) */
+	thead th:first-child,
+	tbody td:first-child {
+		position: static;
+	}
+	input,
+	select,
+	textarea,
+	.search,
+	.field input,
+	.field select,
+	.field textarea {
+		font-size: 1rem;
+	} /* prevents iOS focus-zoom (16px floor) */
+	/* inline search retires; a floating glyph takes over */
+	.search-wrap {
+		display: none;
+	}
+	.search-fab {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: fixed;
+		right: calc(1rem + env(safe-area-inset-right));
+		/* clear of Safari's bottom-bar gesture zone, which silently eats taps */
+		bottom: calc(5rem + env(safe-area-inset-bottom));
+		width: 3rem;
+		height: 3rem;
+		border-radius: 50%;
+		border: none;
+		background: var(--blue);
+		color: oklch(100% 0 0);
+		box-shadow: 0 0.25rem 0.75rem oklch(20% var(--c-neutral) var(--h-neutral) / 0.28);
+		z-index: 70;
+		cursor: pointer;
+		pointer-events: auto;
+		touch-action: manipulation;
+	}
+	/* the glyph's expanded panel: a body-level fixed bar (never inside .nav —
+     iOS clips fixed elements inside overflow-scrolling ancestors) */
+	body.search-open .mobile-search {
+		display: flex;
+		position: fixed;
+		top: env(safe-area-inset-top);
+		left: 0;
+		right: 0;
+		z-index: 75;
+		padding: 0.625rem max(0.75rem, env(safe-area-inset-left));
+		background: var(--surface);
+		border-bottom: 1px solid var(--hair-strong);
+		box-shadow: 0 0.25rem 0.75rem oklch(20% var(--c-neutral) var(--h-neutral) / 0.18);
+	}
+	body.search-open .mobile-search .search-wrap {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0;
+	}
+	body.search-open .mobile-search .search {
+		flex: 1;
+		width: auto;
+	}
+	body.search-open .mobile-search .search-stats {
+		display: inline;
+		white-space: nowrap;
+	}
+	/* both the glyph and its panel step aside for any modal/edit overlay */
+	body:has(.overlay.open) .search-fab,
+	body:has(.overlay.open) .mobile-search {
+		display: none !important;
+	}
+}
+@media not ((max-width: 47.5em) or ((hover: none) and (pointer: coarse))) {
+	.search-fab {
+		display: none;
+	}
+}
+@media (max-width: 47.5em) {
+	.form-grid,
+	.form-grid.cols-3 {
+		grid-template-columns: 1fr;
+	}
+	.nav {
+		padding: 0 0.75rem;
+	}
+	.header {
+		padding: calc(0.625rem + env(safe-area-inset-top)) 0.875rem 0.625rem;
+		gap: 0.5rem;
+	}
+	.table-pad {
+		padding: 0.625rem 0.75rem calc(2.5rem + env(safe-area-inset-bottom));
+	}
+	/* header stacks: title / file status / buttons */
+	.title-block {
+		flex: 1 1 100%;
+	}
+	.header .spacer {
+		display: none;
+	}
+	.file-status {
+		flex: 1 1 100%;
+		min-width: 0;
+	}
+	.file-status #fileStatusText {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	/* modals use the screen */
+	.overlay {
+		padding: 0.75rem 0.5rem;
+	}
+	@media (display-mode: standalone) {
+		.overlay {
+			padding-top: calc(0.75rem + env(safe-area-inset-top));
+		}
+		.header {
+			padding-top: env(safe-area-inset-top);
+		}
+	}
+
+	/* ---------- extracted inline styles ---------- */
+	.custom-key-input {
+		width: 35%;
+		background: var(--paper);
+		border: 1px solid var(--hair-strong);
+		border-radius: var(--radius);
+		padding: 0.25rem 0.5rem;
+		color: var(--ink);
+	}
+	.custom-val-input {
+		width: 50%;
+		background: var(--paper);
+		border: 1px solid var(--hair-strong);
+		border-radius: var(--radius);
+		padding: 0.25rem 0.5rem;
+		color: var(--ink);
+	}
+	.custom-remove-btn {
+		min-height: 0;
+		padding: 0.25rem 0.5rem;
+	}
+	.custom-fields-rows {
+		gap: 0.5rem;
+	}
+	.custom-add-btn {
+		margin-top: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+	.ports-action-row {
+		margin: 0.5rem 0;
+		display: flex;
+		gap: 0.5rem;
+	}
+	.ports-action-btn {
+		margin: 0;
+	}
+	.modal {
+		padding: 1rem 0.875rem;
+	}
+	.start {
+		margin: 2rem 1rem;
+	}
+	.room-grid {
+		grid-template-columns: 1fr;
+	}
+	.rack-card {
+		min-width: 100%;
+	}
+	.topo-controls {
+		max-width: min(13rem, calc(100vw - 1.5rem));
+	}
+}
+@media (max-width: 47.5em) {
+	.header .spacer {
+		display: none;
+	}
+	.header .title-block {
+		flex: 1 1 100%;
+	}
+	.header .file-status {
+		margin-right: auto;
+	}
+}
+
+.filter-role {
+	max-width: 88px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@media (max-width: 47.5em) {
+	.topo-legendnote {
+		display: none;
+	}
+	.zoom-controls {
+		bottom: 2.25rem;
+	}
+}
+
+@media (max-width: 47.5em) and (display-mode: standalone), (hover: none) and (pointer: coarse) and (display-mode: standalone) {
+	body {
+		min-height: 100vh !important;
+	}
+	body:has(.content.map-mode) {
+		height: 100vh !important;
+	}
+}
+
+
