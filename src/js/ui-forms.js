@@ -1332,9 +1332,24 @@ function attachRackZone(o, node) {
 	const mountEdge = node ? outE(node.id, "mounted_in")[0] : null;
 	const locSel = o.querySelector('[data-k="edge:located_in"]');
 	const placementGrid = locSel.closest(".form-grid");
-	const rackZone = document.createElement("div");
-	rackZone.className = "addfield-menu";
-	placementGrid.after(rackZone);
+	const getRackZone = () => {
+		let zone = placementGrid.nextElementSibling?.classList.contains("addfield-chips") 
+			? placementGrid.nextElementSibling 
+			: null;
+		if (!zone) {
+			zone = document.createElement("div");
+			zone.className = "addfield-menu addfield-chips";
+			placementGrid.after(zone);
+		}
+		return zone;
+	};
+	getRackZone(); // Ensure it exists initially
+	const sortRackZone = () => {
+		const zone = getRackZone();
+		const chips = Array.from(zone.querySelectorAll(".chip-add"));
+		chips.sort((a, b) => (a.getAttribute("label") || a.textContent).localeCompare(b.getAttribute("label") || b.textContent));
+		chips.forEach((c) => zone.appendChild(c));
+	};
 	let rackOpen = !!mountEdge;
 	const removeRackFields = () => {
 		placementGrid.querySelector('[data-fw="edge:mounted_in"]')?.remove();
@@ -1392,23 +1407,26 @@ function attachRackZone(o, node) {
 	};
 	const renderRackZone = () => {
 		const racks = racksInLoc(locSel.value);
+		const zone = getRackZone();
 		if (!racks.length) {
-			rackZone.innerHTML = "";
+			zone.querySelector(".rack-chip")?.remove();
 			removeRackFields();
 			rackOpen = false;
 			return;
 		}
 		if (!rackOpen) {
 			removeRackFields();
-			rackZone.innerHTML =
-				'<sg-chip class="chip-add rack-chip" label="rack"></sg-chip>';
-			rackZone.querySelector(".rack-chip").onclick = () => {
-				rackOpen = true;
-				renderRackZone();
-			};
+			if (!zone.querySelector(".rack-chip")) {
+				zone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add rack-chip" label="rack"></sg-chip>');
+				zone.querySelector(".rack-chip").onclick = () => {
+					rackOpen = true;
+					renderRackZone();
+				};
+			}
+			sortRackZone();
 			return;
 		}
-		rackZone.innerHTML = "";
+		zone.querySelector(".rack-chip")?.remove();
 		removeRackFields();
 		placementGrid.insertAdjacentHTML(
 			"beforeend",
@@ -1485,6 +1503,17 @@ function deviceEditor(node, presetLoc, presetClone) {
 			),
 		},
 		{
+			legend: "Hardware & Lifecycle",
+			adder: true,
+			cols: 3,
+			fields: attrFieldsFor(
+				"device",
+				dataSrc,
+				["manufacturer", "model", "serial", "assetTag", "dmsId"],
+				false,
+			),
+		},
+		{
 			legend: "Placement",
 			cols: 3,
 			fields: [
@@ -1508,17 +1537,6 @@ function deviceEditor(node, presetLoc, presetClone) {
 		},
 	];
 
-	sections.push({
-		legend: "Hardware & lifecycle",
-		adder: true,
-		cols: 3,
-		fields: attrFieldsFor(
-			"device",
-			dataSrc,
-			["manufacturer", "model", "serial", "assetTag", "dmsId"],
-			false,
-		),
-	});
 	sections.push({
 		legend: "Notes",
 		fields: [{ ...attrField("device", "notes", dataSrc, false), full: true }],
@@ -1711,25 +1729,34 @@ function deviceEditor(node, presetLoc, presetClone) {
 	/* ---- IP assignment consequences: chips appear only when the mode calls for them ---- */
 	const ipSel = o.querySelector('[data-k="attr:ipAssignment"]');
 	const idGrid = ipSel.closest(".form-grid");
-	const chipsZone = idGrid.nextElementSibling?.classList.contains("addfield-chips") 
-		? idGrid.nextElementSibling 
-		: (() => { const div = document.createElement("div"); div.className = "addfield-menu addfield-chips"; idGrid.after(div); return div; })();
-	
+	const getChipsZone = () => {
+		let zone = idGrid.nextElementSibling?.classList.contains("addfield-chips") 
+			? idGrid.nextElementSibling 
+			: null;
+		if (!zone) {
+			zone = document.createElement("div");
+			zone.className = "addfield-menu addfield-chips";
+			idGrid.after(zone);
+		}
+		return zone;
+	};
+	getChipsZone(); // Ensure it exists initially
 	const existingIps = node ? ipsOf(node.id).map(x => x.ip) : [];
 	let workingIps = existingIps.length ? existingIps.map(x => x.name) : [];
 	let ipChipOpen = workingIps.length > 0,
 		dhcpOpen = !!(node && node.attrs.dhcpNetwork);
 	const sortChips = () => {
-		if (!chipsZone) return;
-		Array.from(chipsZone.children)
+		const zone = getChipsZone();
+		Array.from(zone.children)
 			.sort((a, b) => (a.getAttribute("label") || a.textContent).replace(/[^a-zA-Z]/g, "").localeCompare((b.getAttribute("label") || b.textContent).replace(/[^a-zA-Z]/g, "")))
-			.forEach((c) => chipsZone.appendChild(c));
+			.forEach((c) => zone.appendChild(c));
 	};
 	const renderNetZone = () => {
 		const mode = ipSel.value;
-		chipsZone.querySelector(".net-ip-chip")?.remove();
-		chipsZone.querySelector(".net-dhcp-chip")?.remove();
-		chipsZone.querySelector(".net-hint")?.remove();
+		const zone = getChipsZone();
+		zone.querySelector(".net-ip-chip")?.remove();
+		zone.querySelector(".net-dhcp-chip")?.remove();
+		zone.querySelector(".net-hint")?.remove();
 		
 		if (mode === "static" || mode === "dhcp-reservation") {
 			idGrid.querySelector('[data-fw="dhcpNet"]')?.remove();
@@ -1737,8 +1764,8 @@ function deviceEditor(node, presetLoc, presetClone) {
 			idGrid.querySelectorAll('[data-fw="newIp"]').forEach((el) => el.remove());
 			
 			if (!ipChipOpen) {
-				chipsZone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add net-ip-chip" label="IP address"></sg-chip>');
-				chipsZone.querySelector(".net-ip-chip").onclick = () => {
+				zone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add net-ip-chip" label="IP address"></sg-chip>');
+				zone.querySelector(".net-ip-chip").onclick = () => {
 					ipChipOpen = true;
 					workingIps = [""];
 					renderNetZone();
@@ -1767,8 +1794,8 @@ function deviceEditor(node, presetLoc, presetClone) {
 					};
 				});
 				
-				chipsZone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add net-ip-chip" label="IP address"></sg-chip>');
-				chipsZone.querySelector(".net-ip-chip").onclick = () => {
+				zone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add net-ip-chip" label="IP address"></sg-chip>');
+				zone.querySelector(".net-ip-chip").onclick = () => {
 					workingIps = Array.from(idGrid.querySelectorAll('[data-k="newIp"]')).map(el => el.value);
 					workingIps.push("");
 					renderNetZone();
@@ -1780,13 +1807,13 @@ function deviceEditor(node, presetLoc, presetClone) {
 			const prefixes = nodesOfType("prefix");
 			if (!prefixes.length) {
 				idGrid.querySelector('[data-fw="dhcpNet"]')?.remove();
-				chipsZone.insertAdjacentHTML("afterbegin", '<span class="hint net-hint">no networks yet — define prefixes in IPAM</span>');
+				zone.insertAdjacentHTML("afterbegin", '<span class="hint net-hint">no networks yet — define prefixes in IPAM</span>');
 				return;
 			}
 			if (!dhcpOpen) {
 				idGrid.querySelector('[data-fw="dhcpNet"]')?.remove();
-				chipsZone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add net-dhcp-chip" label="dhcp network"></sg-chip>');
-				chipsZone.querySelector(".net-dhcp-chip").onclick = () => {
+				zone.insertAdjacentHTML("afterbegin", '<sg-chip class="chip-add net-dhcp-chip" label="dhcp network"></sg-chip>');
+				zone.querySelector(".net-dhcp-chip").onclick = () => {
 					dhcpOpen = true;
 					renderNetZone();
 				};
@@ -1927,9 +1954,9 @@ function deviceEditor(node, presetLoc, presetClone) {
 						})
 						.join("") || '<div class="dim ports-empty">No ports yet.</div>'
 				}</div>
-        <div class="addfield-menu" style="margin-top: 0.75rem;">
-          <sg-chip class="chip-add add-port ports-action-btn" label="port"></sg-chip>
+        <div class="addfield-menu addfield-chips">
           ${ifs.some(i => !peerOf(i.id)) ? `<sg-chip class="chip-add add-conn ports-action-btn" label="connection"></sg-chip>` : ""}
+          <sg-chip class="chip-add add-port ports-action-btn" label="port"></sg-chip>
         </div>`;
 			grid.querySelector(".add-port").onclick = () => portEditor(node.id);
 			const addConnBtn = grid.querySelector(".add-conn");
