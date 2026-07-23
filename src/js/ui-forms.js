@@ -1485,6 +1485,17 @@ function deviceEditor(node, presetLoc, presetClone) {
 			),
 		},
 		{
+			legend: "Hardware & Lifecycle",
+			adder: true,
+			cols: 3,
+			fields: attriFieldsFor(
+				"device",
+				dataSrc,
+				["manufacturer", "model", "serial", "assetTag", "dmsId"],
+				false,
+			),
+		},
+		{
 			legend: "Placement",
 			cols: 3,
 			fields: [
@@ -1508,17 +1519,6 @@ function deviceEditor(node, presetLoc, presetClone) {
 		},
 	];
 
-	sections.push({
-		legend: "Hardware & lifecycle",
-		adder: true,
-		cols: 3,
-		fields: attrFieldsFor(
-			"device",
-			dataSrc,
-			["manufacturer", "model", "serial", "assetTag", "dmsId"],
-			false,
-		),
-	});
 	sections.push({
 		legend: "Notes",
 		fields: [{ ...attrField("device", "notes", dataSrc, false), full: true }],
