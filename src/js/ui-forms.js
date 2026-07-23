@@ -1333,9 +1333,7 @@ function attachRackZone(o, node) {
 	const locSel = o.querySelector('[data-k="edge:located_in"]');
 	const placementGrid = locSel.closest(".form-grid");
 	const getRackZone = () => {
-		let zone = placementGrid.nextElementSibling?.classList.contains("addfield-chips") 
-			? placementGrid.nextElementSibling 
-			: null;
+		let zone = placementGrid.parentElement.querySelector(".addfield-chips");
 		if (!zone) {
 			zone = document.createElement("div");
 			zone.className = "addfield-menu addfield-chips";
@@ -1730,9 +1728,7 @@ function deviceEditor(node, presetLoc, presetClone) {
 	const ipSel = o.querySelector('[data-k="attr:ipAssignment"]');
 	const idGrid = ipSel.closest(".form-grid");
 	const getChipsZone = () => {
-		let zone = idGrid.nextElementSibling?.classList.contains("addfield-chips") 
-			? idGrid.nextElementSibling 
-			: null;
+		let zone = idGrid.parentElement.querySelector(".addfield-chips");
 		if (!zone) {
 			zone = document.createElement("div");
 			zone.className = "addfield-menu addfield-chips";
