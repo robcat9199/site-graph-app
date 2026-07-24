@@ -62,8 +62,8 @@ The SiteGraph data schema defines a strict, bounded domain model for physical an
 | `location` | `loc-` | `locationType` (enum) | `notes`, `custom` (object) |
 | `rack` | `rack-` | `heightU` (int 1–100) | `notes`, `custom` (object) |
 | `patch_panel` | `pp-` | `jackCount` (int 1–999) | `notes`, `custom` (object) |
-| `device` | `dev-` | `role` (enum), `ipAssignment` (enum) | `hostname`, `mac`, `department`, `dhcpNetwork`, `assetTag`, `dmsId`, `manufacturer`, `model`, `serial`, `poe` (bool), `notes`, `custom` (object) |
-| `interface` | `if-` | `portMode` (enum) | `stdName` (text), `accessVlan` (int 1–4094), `nativeVlan` (int 1–4094), `allowedVlans` (text), `media` (enum), `notes`, `custom` (object) |
+| `device` | `dev-` | `role` (enum), `ipAssignment` (enum) | `hostname`, `mac`, `department`, `dhcpNetwork`, `assetTag`, `dmsId`, `manufacturer`, `model`, `serial`, `poe` (enum), `notes`, `custom` (object) |
+| `interface` | `if-` | `portMode` (enum) | `stdName` (text), `accessVlan` (int 1–4094), `nativeVlan` (int 1–4094), `allowedVlans` (text), `media` (enum), `poe` (enum), `notes`, `custom` (object) |
 | `circuit` | `ckt-` | `provider` (text), `circuitType` (enum) | `bandwidth`, `circuitId`, `wanIp`, `staticBlock`, `ispGateway`, `notes`, `custom` (object) |
 | `prefix` | `pfx-` | — | `description`, `vlanId` (int 1–4094), `gatewayIp` (ip), `dhcpStart` (ip), `dhcpEnd` (ip), `custom` (object) |
 | `ip_address` | `ip-` | — | `description`, `custom` (object) |
@@ -94,7 +94,7 @@ The SiteGraph data schema defines a strict, bounded domain model for physical an
 
 | Enum | Values |
 |---|---|
-| `locationType` | `MDF`, `IDF`, `building`, `department`, `office`, `room`, `closet`, `showfloor`, `outdoor`, `other` |
+| `locationType` | `MDF`, `IDF`, `building`, `department`, `office`, `room`, `closet`, `showroom`, `outdoor`, `other` |
 | `role` | `firewall`, `router`, `modem`, `core-switch`, `switch`, `server`, `pbx`, `nvr`, `ap`, `ups`, `desktop`, `laptop`, `phone`, `printer`, `mfp`, `camera`, `tablet`, `tv`, `other` — *(`patch-panel` was removed in July 2026; panels are their own node type)* |
 | `ipAssignment` | `static`, `dhcp`, `dhcp-reservation`, `none` |
 | `portMode` | `access`, `trunk` |

@@ -84,7 +84,7 @@ export function renderStart(content) {
     <div class="kicker">Network source of truth</div>
     <h2>SiteGraph</h2>
     <p>Offline network &amp; asset documentation. One HTML file, one JSON file per site, no server. Files are validated on load — invalid files are rejected with a full error report.</p>
-    <button class="btn primary" id="stOpen">Open data.json…</button>
+    <button class="btn primary" id="stOpen">Open from JSON</button>
     <button class="btn" id="stNew">New site</button>
     <button class="btn quiet" id="stSample">Load sample site</button>
     <div class="note">Everything works offline. The app keeps a local copy of itself and the map engine after the first load. A working copy autosaves to this browser after every change.</div>

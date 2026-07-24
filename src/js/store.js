@@ -338,11 +338,11 @@ export const SAMPLE = (() => {
 		nn("loc-hq", "location", "Headquarters", { locationType: "building" }),
 		nn("loc-hq-mdf", "location", "MDF Closet", { locationType: "MDF" }),
 		nn("loc-hq-servers", "location", "Server Room", { locationType: "room" }),
-		nn("loc-hq-floor1", "location", "Floor 1 Sales", { locationType: "showfloor" }),
+		nn("loc-hq-floor1", "location", "Floor 1 Sales", { locationType: "showroom" }),
 		
 		nn("loc-branch", "location", "Branch Office", { locationType: "building" }),
 		nn("loc-branch-idf", "location", "Branch IDF", { locationType: "IDF" }),
-		nn("loc-branch-sales", "location", "Branch Showroom", { locationType: "showfloor" }),
+		nn("loc-branch-sales", "location", "Branch Showroom", { locationType: "showroom" }),
 		
 		nn("rack-hq-core", "rack", "HQ Core Rack", { heightU: 42 }),
 		nn("rack-hq-svr", "rack", "HQ Server Rack", { heightU: 42 }),
@@ -452,8 +452,8 @@ export const SAMPLE = (() => {
 	
 	// servers
 	ifaces.push(
-		nn("if-svr-db-eth0", "interface", "eth0", { portMode: "access", accessVlan: 20, media: "copper" }),
-		nn("if-svr-app-eth0", "interface", "eth0", { portMode: "access", accessVlan: 20, media: "copper" })
+		nn("if-svr-db-eth0", "interface", "eth0", { portMode: "access", accessVlan: 20, media: "copper", stdName: "eth0" }),
+		nn("if-svr-app-eth0", "interface", "eth0", { portMode: "access", accessVlan: 20, media: "copper", stdName: "eth0" })
 	);
 	edges.push(
 		ee("dev-svr-db", "has_interface", "if-svr-db-eth0"),
@@ -514,12 +514,16 @@ export const SAMPLE = (() => {
 	
 	// Create interfaces for these endpoints so we can connect them to the switch
 	ifaces.push(
-		nn("if-ep-bob-phone", "interface", "eth0", { portMode: "access", media: "copper" }),
-		nn("if-ep-hq-print", "interface", "eth0", { portMode: "access", media: "copper" }),
-		nn("if-ep-cam1", "interface", "eth0", { portMode: "access", media: "copper" }),
-		nn("if-ep-charlie-lap", "interface", "eth0", { portMode: "access", media: "copper" })
+		nn("if-ep-bob-lap-eth0", "interface", "eth0", { portMode: "access", media: "copper", stdName: "eth0" }),
+		nn("if-ep-alice-lap-eth0", "interface", "eth0", { portMode: "access", media: "copper", stdName: "eth0" }),
+		nn("if-ep-bob-phone", "interface", "eth0", { portMode: "access", media: "copper", stdName: "eth0" }),
+		nn("if-ep-hq-print", "interface", "eth0", { portMode: "access", media: "copper", stdName: "eth0" }),
+		nn("if-ep-cam1", "interface", "eth0", { portMode: "access", media: "copper", stdName: "eth0" }),
+		nn("if-ep-charlie-lap", "interface", "eth0", { portMode: "access", media: "copper", stdName: "eth0" })
 	);
 	edges.push(
+		ee("dev-ep-bob-lap", "has_interface", "if-ep-bob-lap-eth0"),
+		ee("dev-ep-alice-lap", "has_interface", "if-ep-alice-lap-eth0"),
 		ee("dev-ep-bob-phone", "has_interface", "if-ep-bob-phone"),
 		ee("dev-ep-hq-print", "has_interface", "if-ep-hq-print"),
 		ee("dev-ep-cam1", "has_interface", "if-ep-cam1"),

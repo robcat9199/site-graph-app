@@ -226,7 +226,7 @@ label.filter {
 [data-theme="dark"] .badge.b-dev { background: var(--blue); }
 [data-theme="dark"] .badge.b-sw { background: var(--amber); }
 [data-theme="dark"] .badge.b-gw { background: var(--red); }
-[data-theme="dark"] .badge.b-loc { background: var(--gray-soft); color: #000; }
+[data-theme="dark"] .badge.b-loc { background: var(--gray-soft); color: #fff !important; }
 [data-theme="dark"] .badge.b-warn { background: var(--amber); }
 .pill {
 	display: inline-block;

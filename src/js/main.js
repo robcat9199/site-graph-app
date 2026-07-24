@@ -76,7 +76,7 @@ function init() {
 					<button id="btnOpen">Open from JSON…</button>
 					<button id="exp-clearlocal">Clear browser working copy…</button>
 					<div class="menu-note">Reports</div>
-					<button id="btnCheck">Check Integrity</button>
+					<button id="btnCheck">Integrity Check</button>
 					<button id="btnActivity">Activity Log</button>
 					<div class="menu-note">Machine-readable exports</div>
 					<button id="exp-json">JSON (download copy)</button>
@@ -182,7 +182,7 @@ function init() {
 		setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 	};
 	$("#exp-new").onclick = newSite;
-	$("#exp-clearlocal").onclick = () => {
+	$("#exp-clearlocal").onclick = async () => {
 		if (
 			!confirm(
 				"Remove the browser-stored working copy and backup? Your JSON file on disk is not touched.",
@@ -193,13 +193,9 @@ function init() {
 			localStorage.removeItem(LS_KEY);
 			localStorage.removeItem(LS_BAK);
 		} catch (e) {}
-		store.doc = null;
-		store.fileName = "";
-		store.dirty = false;
-		store.fileHandle = null;
-		renderFileStatus();
-		renderAll();
-		toast("Browser working copy cleared");
+		await dbDel(LS_KEY);
+		await dbDel(LS_BAK);
+		window.location.reload();
 	};
 	$$("#navBar .tab").forEach(
 		(b) =>

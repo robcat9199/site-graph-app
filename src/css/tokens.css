@@ -143,13 +143,13 @@ textarea,
 }
 html {
 	background: var(--surface);
-	transition: background 0.4s ease, color 0.4s ease;
+	transition: background 0.1s ease, color 0.1s ease;
 }
 body {
 	margin: 0;
 	background: var(--paper);
 	color: var(--ink);
-	transition: background 0.4s ease, color 0.4s ease;
+	transition: background 0.1s ease, color 0.1s ease;
 	font-family: var(--sans);
 	font-size: var(--fs-body);
 	line-height: 1.5;

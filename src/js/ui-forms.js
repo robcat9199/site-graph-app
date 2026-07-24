@@ -47,53 +47,7 @@ function collectCustomAttrs(o) {
 	return Object.keys(custom).length ? custom : undefined;
 }
 
-function attachCustomFieldsZone(o, node) {
-	const fs = document.createElement("fieldset");
-	fs.className = "fieldset custom-fields-fs";
 
-	let rowsHtml = "";
-	if (node && node.attrs && node.attrs.custom) {
-		for (const [k, v] of Object.entries(node.attrs.custom)) {
-			rowsHtml += `
-        <div class="port-row custom-field-row">
-          <input type="text" placeholder="Key" data-custom-key value="${esc(k)}" class="custom-key-input">
-          <input type="text" placeholder="Value" data-custom-val value="${esc(v)}" class="custom-val-input">
-          <button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
-        </div>
-      `;
-		}
-	}
-
-	fs.innerHTML = `
-    <legend>Custom Fields</legend>
-    <div class="subrows custom-fields-rows">
-      ${rowsHtml}
-    </div>
-    <button type="button" class="subrow-add add-custom-field-btn custom-add-btn">＋ Add custom field</button>
-  `;
-
-	const rowsContainer = fs.querySelector(".custom-fields-rows");
-	const addBtn = fs.querySelector(".add-custom-field-btn");
-
-	addBtn.onclick = () => {
-		const row = document.createElement("div");
-		row.className = "port-row custom-field-row";
-		row.innerHTML = `
-      <input type="text" placeholder="Key" data-custom-key class="custom-key-input">
-      <input type="text" placeholder="Value" data-custom-val class="custom-val-input">
-      <button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
-    `;
-		row.querySelector(".remove-custom-field-btn").onclick = () => row.remove();
-		rowsContainer.appendChild(row);
-		row.querySelector("[data-custom-key]").focus();
-	};
-
-	fs.querySelectorAll(".remove-custom-field-btn").forEach((btn) => {
-		btn.onclick = (e) => e.target.closest(".custom-field-row").remove();
-	});
-
-	o.querySelector(".modal-actions").before(fs);
-}
 
 /* sections: [{legend, cols, fields, chips:[fields], adder}] — chips render as +pills until opened */
 function openEditorForm({
@@ -107,7 +61,7 @@ function openEditorForm({
 	onDuplicate,
 	historyOf,
 	wide,
-	showCustomFields,
+
 	node,
 }) {
 	const html = sections
@@ -118,7 +72,36 @@ function openEditorForm({
 			const closedChips = (s.chips || []).filter((f) => !openChips.includes(f));
 			openChips.sort((a, b) => a.label.localeCompare(b.label));
 			closedChips.sort((a, b) => a.label.localeCompare(b.label));
-			const body = `<div class="form-grid${s.cols === 3 ? " cols-3" : ""}">${(
+			if (s.isCustomFieldSection) {
+				const hasCustom = node && node.attrs && node.attrs.custom && Object.keys(node.attrs.custom).length > 0;
+				let rowsHtml = "";
+				if (hasCustom) {
+					for (const [k, v] of Object.entries(node.attrs.custom)) {
+						rowsHtml += `
+						<div class="port-row custom-field-row">
+							<input type="text" placeholder="Key" data-custom-key value="${esc(k)}" class="custom-key-input">
+							<input type="text" placeholder="Value" data-custom-val value="${esc(v)}" class="custom-val-input">
+							<button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
+						</div>`;
+					}
+				} else {
+					rowsHtml += `
+						<div class="port-row custom-field-row">
+							<input type="text" placeholder="Key" data-custom-key class="custom-key-input">
+							<input type="text" placeholder="Value" data-custom-val class="custom-val-input">
+							<button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
+						</div>`;
+				}
+				const body = `<div class="subrows custom-fields-rows">${rowsHtml}</div>
+				<div class="addfield-menu addfield-chips"><sg-chip class="chip-add add-custom-field-btn custom-add-btn" label="custom field"></sg-chip></div>`;
+				if (s.adder && !hasCustom) {
+					return `<div class="section-adder" data-sec="${si}"><button type="button">＋ ${esc(s.legend)}</button></div>
+					<fieldset class="fieldset" data-secbody="${si}" hidden><legend>${esc(s.legend)} <button type="button" class="legend-x" data-secx="${si}">remove</button></legend>${body}</fieldset>`;
+				}
+				return `<fieldset class="fieldset"><legend>${esc(s.legend)}</legend>${body}</fieldset>`;
+			}
+
+			const body = `<div class="form-grid${s.cols === 3 ? " cols-3" : ""}"${s.order ? ` data-order="${s.order.join(',')}"` : ""}>${(
 				s.fields || []
 			)
 				.map((f) => fieldHtml(f, false))
@@ -127,7 +110,7 @@ function openEditorForm({
 			if (
 				s.adder &&
 				!openChips.length &&
-				!s.fields.some(
+				!(s.fields || []).some(
 					(f) => f.value !== undefined && f.value !== "" && f.value !== null,
 				)
 			)
@@ -152,7 +135,7 @@ function openEditorForm({
 		wide,
 	);
 	const m = o.querySelector(".modal");
-	const allFields = sections.flatMap((s) => [...s.fields, ...(s.chips || [])]);
+	const allFields = sections.flatMap((s) => [...(s.fields || []), ...(s.chips || [])]);
 	/* chips: one delegated handler — no rebinding, grids resolved per click */
 	m.addEventListener("click", (ev) => {
 		const chip = ev.target.closest(".chip-add[data-chip]");
@@ -165,10 +148,43 @@ function openEditorForm({
 			chip.remove();
 			if (!menu.children.length) menu.remove();
 			grid.insertAdjacentHTML("beforeend", fieldHtml(f, true));
+			
+			if (grid.dataset.order) {
+				const order = grid.dataset.order.split(",");
+				const fields = Array.from(grid.querySelectorAll(".field"));
+				fields.sort((a, b) => {
+					const aIndex = order.indexOf(a.dataset.fw);
+					const bIndex = order.indexOf(b.dataset.fw);
+					return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+				});
+				fields.forEach(f => grid.appendChild(f));
+			}
+
 			if (FINE_POINTER)
 				grid.querySelector(`[data-fw="${f.key}"] [data-k]`)?.focus();
 			return;
 		}
+		
+		const remCustom = ev.target.closest(".remove-custom-field-btn");
+		if (remCustom) {
+			remCustom.closest(".custom-field-row").remove();
+			return;
+		}
+		const addCustom = ev.target.closest(".add-custom-field-btn");
+		if (addCustom) {
+			const rowsContainer = addCustom.closest("fieldset").querySelector(".custom-fields-rows");
+			const row = document.createElement("div");
+			row.className = "port-row custom-field-row";
+			row.innerHTML = `
+			<input type="text" placeholder="Key" data-custom-key class="custom-key-input">
+			<input type="text" placeholder="Value" data-custom-val class="custom-val-input">
+			<button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
+			`;
+			rowsContainer.appendChild(row);
+			row.querySelector("[data-custom-key]").focus();
+			return;
+		}
+
 		const rem = ev.target.closest(".field-x[data-remf]");
 		if (rem) {
 			const key = rem.dataset.remf;
@@ -277,7 +293,7 @@ function openEditorForm({
 	if (onDuplicate) m.querySelector(".fm-dup").onclick = () => onDuplicate(o);
 	if (historyOf)
 		m.querySelector(".fm-hist").onclick = () => showHistory(historyOf);
-	if (showCustomFields) attachCustomFieldsZone(o, node);
+
 	return o;
 }
 
@@ -305,6 +321,30 @@ const attrField = (type, k, node, required) => {
 };
 const attrFieldsFor = (type, node, keys, required) =>
 	keys.map((k) => attrField(type, k, node, required));
+
+const notesSection = (nodeType, node, isEdge = false) => ({
+	legend: "Notes",
+	cols: 1,
+	adder: true,
+	fields: [
+		isEdge
+			? {
+					key: "attr:notes",
+					label: "notes",
+					type: "textarea",
+					value: node?.attrs?.notes,
+					full: true,
+				}
+			: { ...attrField(nodeType, "notes", node, false), full: true },
+	],
+});
+
+const customFieldSection = (node) => ({
+	legend: "Custom Field",
+	adder: true,
+	isCustomFieldSection: true,
+});
+
 const vlanChoices = () => {
 	const s = new Set();
 	for (const n of store.doc.nodes) {
@@ -594,10 +634,11 @@ function locationEditor(node) {
 						type: "select",
 						options: locOpts(node?.id),
 						value: edgeVal(node, "located_in"),
-					},
-					{ ...attrField("location", "notes", node, false), full: true },
+					}
 				],
 			},
+			notesSection("location", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (o) => confirmDelete(node.id, o) : null,
@@ -628,15 +669,15 @@ function rackEditor(node) {
 						type: "select",
 						options: locOpts(),
 						value: edgeVal(node, "located_in"),
-					},
-					{ ...attrField("rack", "notes", node, false), full: true },
+					}
 				],
 			},
+			notesSection("rack", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (o) => confirmDelete(node.id, o) : null,
 		onSubmit: stdSubmit("rack", node),
-		showCustomFields: true,
 		node: node,
 	});
 }
@@ -665,10 +706,11 @@ function patchPanelEditor(node) {
 						type: "select",
 						options: locOpts(),
 						value: edgeVal(node, "located_in"),
-					},
-					{ ...attrField("patch_panel", "notes", node, false), full: true },
+					}
 				],
 			},
+			notesSection("patch_panel", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (ov) => confirmDelete(node.id, ov) : null,
@@ -677,7 +719,6 @@ function patchPanelEditor(node) {
 			if (rackErr) return rackErr;
 			return stdSubmit("patch_panel", node)(vals, ov);
 		},
-		showCustomFields: true,
 		node: node,
 	});
 	attachRackZone(o, node);
@@ -715,15 +756,15 @@ function personEditor(node) {
 						node,
 						["title", "extension", "did", "email"],
 						false,
-					),
-					{ ...attrField("person", "notes", node, false) },
+					)
 				],
 			},
+			notesSection("person", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (o) => confirmDelete(node.id, o) : null,
 		onSubmit: stdSubmit("person", node),
-		showCustomFields: true,
 		node: node,
 	});
 }
@@ -761,15 +802,15 @@ function circuitEditor(node) {
 						node,
 						["bandwidth", "circuitId", "wanIp", "staticBlock", "ispGateway"],
 						false,
-					),
-					{ ...attrField("circuit", "notes", node, false) },
+					)
 				],
 			},
+			notesSection("circuit", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (o) => confirmDelete(node.id, o) : null,
 		onSubmit: stdSubmit("circuit", node),
-		showCustomFields: true,
 		node: node,
 	});
 }
@@ -799,11 +840,12 @@ function prefixEditor(node) {
 					false,
 				),
 			},
+			notesSection("prefix", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (o) => confirmDelete(node.id, o) : null,
 		onSubmit: stdSubmit("prefix", node),
-		showCustomFields: true,
 		node: node,
 	});
 }
@@ -843,11 +885,12 @@ function ipEditor(node) {
 					},
 				],
 			},
+			notesSection("ip_address", node),
+			customFieldSection(node)
 		],
 		historyOf: node?.id,
 		onDelete: node ? (o) => confirmDelete(node.id, o) : null,
 		onSubmit: stdSubmit("ip_address", node),
-		showCustomFields: true,
 		node: node,
 	});
 }
@@ -896,18 +939,29 @@ function portEditor(devId, iface) {
 			...attrField("interface", "portMode", iface, true),
 			value: iface ? iface.attrs.portMode : "access",
 		});
-	fields.push(attrField("interface", "media", iface, false));
 	const chips = infra
 		? [
+				{ ...attrField("interface", "media", iface, false) },
 				vlanField("accessVlan"),
 				vlanField("nativeVlan"),
 				avlField,
-				{ ...attrField("interface", "notes", iface, false) },
+				{
+					key: "attr:poe",
+					label: "POE SUPPORT",
+					chipLabel: "poe",
+					type: "select",
+					options: ["PoE", "PoE+", "PoE++"].map(o => ({ v: o, l: o })),
+					value: iface?.attrs?.poe,
+				}
 			]
-		: [{ ...attrField("interface", "notes", iface, false) }];
+		: [{ ...attrField("interface", "media", iface, false) }];
 	const link = iface ? linkOf(iface.id) : null;
 	const peer = iface ? peerOf(iface.id) : null;
-	const sections = [{ legend: "Port", cols: 3, fields, chips }];
+	const sections = [
+		{ legend: "Port", cols: 3, fields, chips },
+		notesSection("interface", iface),
+		customFieldSection(iface)
+	];
 	const o = openEditorForm({
 		title: iface
 			? `Edit port — ${describeIfaceTarget(iface.id)}`
@@ -964,7 +1018,6 @@ function portEditor(devId, iface) {
 					);
 				}
 			}),
-		showCustomFields: true,
 		node: iface,
 	});
 	if (infra && avl.length) {
@@ -1078,6 +1131,7 @@ function connectionEditor(ifId) {
 					},
 				],
 			},
+			notesSection("connected_to", e0, true)
 		],
 		onSubmit: (vals) =>
 			mutate((doc) => {
@@ -1093,6 +1147,7 @@ function connectionEditor(ifId) {
 					["cbl:jack", "jack"],
 					["cbl:cableColor", "cableColor"],
 					["cbl:length", "length"],
+					["attr:notes", "notes"],
 				])
 					if (vals[vk] !== undefined) cattrs[ak] = vals[vk];
 				if (Object.keys(cattrs).length) ed.attrs = cattrs;
@@ -1236,6 +1291,7 @@ function connectForm(fixedA, preDevId = null) {
 					{ key: "cbl:length", label: "cable length", type: "text" },
 				],
 			},
+			notesSection("connected_to", null, true)
 		],
 		onSubmit: (vals) => {
 			const a = fixedA || o.querySelector('[data-k="pA"]').value;
@@ -1251,6 +1307,7 @@ function connectForm(fixedA, preDevId = null) {
 				["cbl:jack", "jack"],
 				["cbl:cableColor", "cableColor"],
 				["cbl:length", "length"],
+				["attr:notes", "notes"],
 			])
 				if (vals[vk] !== undefined) attrs[ak] = vals[vk];
 			return mutate((doc) => {
@@ -1439,6 +1496,16 @@ function attachRackZone(o, node) {
       <div class="field" data-fw="rackU"><label>rack unit (U)</label><select data-k="rackU"></select>
         <div class="hint">open slots only</div></div>`,
 		);
+		if (placementGrid.dataset.order) {
+			const order = placementGrid.dataset.order.split(",");
+			const fields = Array.from(placementGrid.querySelectorAll(".field"));
+			fields.sort((a, b) => {
+				const aIndex = order.indexOf(a.dataset.fw);
+				const bIndex = order.indexOf(b.dataset.fw);
+				return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+			});
+			fields.forEach(f => placementGrid.appendChild(f));
+		}
 		placementGrid.querySelector('[data-k="edge:mounted_in"]').onchange = fillU;
 		placementGrid.querySelector(".rack-x").onclick = () => {
 			rackOpen = false;
@@ -1485,20 +1552,41 @@ function deviceEditor(node, presetLoc, presetClone) {
 					required: true,
 					value: dataSrc?.name,
 				},
-				attrField("device", "role", dataSrc, true),
+				(() => {
+					const f = attrField("device", "role", dataSrc, true);
+					f.type = "select";
+					const baseOpts = ENUMS[f.enum] || [];
+					if (!isNew) {
+						const isInfra = PORT_GEN_ROLES.includes(dataSrc.attrs.role);
+						f.options = baseOpts.filter(o => isInfra ? PORT_GEN_ROLES.includes(o) : !PORT_GEN_ROLES.includes(o)).map(o => ({ v: o, l: o }));
+					} else {
+						f.options = baseOpts.map(o => ({ v: o, l: o }));
+					}
+					return f;
+				})(),
 				{
 					...attrField("device", "ipAssignment", dataSrc, true),
 					value: dataSrc ? dataSrc.attrs.ipAssignment : "none",
 				},
 			],
-			chips: attrFieldsFor(
-				"device",
-				dataSrc,
-				["hostname", "mac", "department", "poe"],
-				false,
-			).map((f) =>
-				f.key === "attr:department" ? { ...f, list: "deptList" } : f,
-			),
+			chips: [
+				...attrFieldsFor(
+					"device",
+					dataSrc,
+					["hostname", "mac", "department"],
+					false,
+				).map((f) =>
+					f.key === "attr:department" ? { ...f, list: "deptList" } : f,
+				),
+				{
+					key: "attr:poe",
+					label: "POE SUPPORT",
+					chipLabel: "poe",
+					type: "select",
+					options: ["PoE", "PoE+", "PoE++"].map(o => ({ v: o, l: o })),
+					value: dataSrc?.attrs?.poe,
+				}
+			],
 		},
 		{
 			legend: "Hardware & Lifecycle",
@@ -1514,6 +1602,7 @@ function deviceEditor(node, presetLoc, presetClone) {
 		{
 			legend: "Placement",
 			cols: 3,
+			order: ["edge:located_in", "edge:mounted_in", "rackU", "edge:used_by"],
 			fields: [
 				{
 					key: "edge:located_in",
@@ -1535,10 +1624,8 @@ function deviceEditor(node, presetLoc, presetClone) {
 		},
 	];
 
-	sections.push({
-		legend: "Notes",
-		fields: [{ ...attrField("device", "notes", dataSrc, false), full: true }],
-	});
+	sections.push(notesSection("device", dataSrc));
+	sections.push(customFieldSection(dataSrc));
 
 	let o; /* assigned below; safe — handlers run after assignment */
 	o = openEditorForm({
@@ -1550,7 +1637,6 @@ function deviceEditor(node, presetLoc, presetClone) {
 		sections,
 		historyOf: node?.id,
 		onDelete: node ? (ov) => confirmDelete(node.id, ov) : null,
-		showCustomFields: true,
 		node: node,
 		onDuplicate: node
 			? (ov) => {
@@ -1845,10 +1931,30 @@ function deviceEditor(node, presetLoc, presetClone) {
 	renderNetZone();
 
 	/* ---- switches declare a port count; interfaces are generated from it ---- */
+	const roleSel = o.querySelector('[data-k="attr:role"]');
+	
+	const renderPoeVisibility = () => {
+		if (!roleSel) return;
+		const isEndpoint = !INFRA_ROLES.has(roleSel.value);
+		const poeWrap = o.querySelector('[data-fw="attr:poe"]');
+		const poeChip = o.querySelector('.chip-add[data-chip="attr:poe"]');
+		if (isEndpoint) {
+			if (poeChip) poeChip.style.display = "";
+			if (poeWrap) poeWrap.style.display = "";
+		} else {
+			if (poeChip) poeChip.style.display = "none";
+			if (poeWrap) {
+				poeWrap.style.display = "none";
+				const sel = poeWrap.querySelector("select");
+				if (sel) sel.value = "";
+			}
+		}
+	};
+	
 	if (isNew) {
-		const roleSel = o.querySelector('[data-k="attr:role"]');
 		let sfpOpen = false;
 		const renderSwZone = () => {
+			const chipsZone = getChipsZone();
 			chipsZone.querySelector(".sw-sfp-chip")?.remove();
 			if (!PORT_GEN_ROLES.includes(roleSel.value)) {
 				idGrid.querySelector('[data-fw="genPorts"]')?.remove();
@@ -1886,17 +1992,27 @@ function deviceEditor(node, presetLoc, presetClone) {
 			}
 			sortChips();
 		};
-		roleSel.addEventListener("change", () => {
-			/* picking a role re-defaults ip assignment (new devices only) — still freely changeable */
-			const def = IP_DEFAULT_BY_ROLE[roleSel.value];
-			if (def && ipSel.value !== def) {
-				ipSel.value = def;
-				renderNetZone();
-			}
+
+		if (roleSel) {
+			roleSel.addEventListener("change", () => {
+				const def = IP_DEFAULT_BY_ROLE[roleSel.value];
+				if (def && ipSel.value !== def) {
+					ipSel.value = def;
+					renderNetZone();
+				}
+				renderPoeVisibility();
+				renderSwZone();
+			});
+			renderPoeVisibility();
 			renderSwZone();
-		});
-		renderSwZone();
+		}
+	} else {
+		if (roleSel) {
+			roleSel.addEventListener("change", renderPoeVisibility);
+			renderPoeVisibility();
+		}
 	}
+
 
 	/* ---- ports manager (edit mode): stays live via the overlay refresh registry ---- */
 	if (!isNew) {
