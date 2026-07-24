@@ -12,10 +12,23 @@ function fieldCtl(f) {
 			f.type === "enum"
 				? ENUMS[f.enum].map((v) => ({ v, l: v }))
 				: f.options || [];
-		return `<select data-k="${f.key}"${req}>${f.required ? (val === "" ? '<option value="">— select —</option>' : "") : '<option value="">— none —</option>'}${opts
+		
+		let emptyOpt = f.required ? (val === "" ? '<option value="">— select —</option>' : "") : '<option value="">— none —</option>';
+		let currentVal = val;
+
+		if (f.key === "attr:poe") {
+			emptyOpt = "";
+			if (currentVal === "" && opts.length > 0) {
+				currentVal = opts[0].v;
+			}
+		} else if (f.key === "attr:accessVlan" || f.key === "attr:nativeVlan") {
+			emptyOpt = '<option value="">— select —</option>';
+		}
+
+		return `<select data-k="${f.key}"${req}>${emptyOpt}${opts
 			.map(
 				(o) =>
-					`<option value="${esc(o.v)}"${String(o.v) === String(val) ? " selected" : ""}>${esc(o.l)}</option>`,
+					`<option value="${esc(o.v)}"${String(o.v) === String(currentVal) ? " selected" : ""}>${esc(o.l)}</option>`,
 			)
 			.join("")}</select>`;
 	}
@@ -45,6 +58,20 @@ function collectCustomAttrs(o) {
 		custom[key] = val;
 	});
 	return Object.keys(custom).length ? custom : undefined;
+}
+function collectDhcpRanges(o) {
+	const ranges = [];
+	o.querySelectorAll(".dhcp-range-row").forEach((row) => {
+		const rawVal = row.querySelector("[data-dhcp-range-val]").value.trim();
+		if (!rawVal) return;
+		const parts = rawVal.split("-").map(p => p.trim());
+		if (parts.length === 2 && parts[0] && parts[1]) {
+			ranges.push(`${parts[0]} - ${parts[1]}`);
+		} else {
+			ranges.push(rawVal); // Let the validator throw an error
+		}
+	});
+	return ranges.length ? ranges : undefined;
 }
 
 
@@ -78,25 +105,61 @@ function openEditorForm({
 				if (hasCustom) {
 					for (const [k, v] of Object.entries(node.attrs.custom)) {
 						rowsHtml += `
-						<div class="port-row custom-field-row">
-							<input type="text" placeholder="Key" data-custom-key value="${esc(k)}" class="custom-key-input">
+						<div class="field full custom-field-row">
+							<label>
+								<input type="text" placeholder="KEY" data-custom-key value="${esc(k)}" class="custom-key-input" style="all: unset; width: 100%; cursor: text; text-transform: uppercase; color: inherit; font-size: inherit; letter-spacing: inherit;">
+								<button type="button" class="field-x remove-custom-field-btn custom-remove-btn" tabindex="-1">remove</button>
+							</label>
 							<input type="text" placeholder="Value" data-custom-val value="${esc(v)}" class="custom-val-input">
-							<button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
 						</div>`;
 					}
 				} else {
 					rowsHtml += `
-						<div class="port-row custom-field-row">
-							<input type="text" placeholder="Key" data-custom-key class="custom-key-input">
+						<div class="field full custom-field-row">
+							<label>
+								<input type="text" placeholder="KEY" data-custom-key class="custom-key-input" style="all: unset; width: 100%; cursor: text; text-transform: uppercase; color: inherit; font-size: inherit; letter-spacing: inherit;">
+								<button type="button" class="field-x remove-custom-field-btn custom-remove-btn" tabindex="-1">remove</button>
+							</label>
 							<input type="text" placeholder="Value" data-custom-val class="custom-val-input">
-							<button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
 						</div>`;
 				}
 				const body = `<div class="subrows custom-fields-rows">${rowsHtml}</div>
 				<div class="addfield-menu addfield-chips"><sg-chip class="chip-add add-custom-field-btn custom-add-btn" label="custom field"></sg-chip></div>`;
-				if (s.adder && !hasCustom) {
-					return `<div class="section-adder" data-sec="${si}"><button type="button">＋ ${esc(s.legend)}</button></div>
-					<fieldset class="fieldset" data-secbody="${si}" hidden><legend>${esc(s.legend)} <button type="button" class="legend-x" data-secx="${si}">remove</button></legend>${body}</fieldset>`;
+				if (s.adder) {
+					return `<div class="section-adder" data-sec="${si}"${hasCustom ? ' hidden' : ''}><button type="button">＋ ${esc(s.legend)}</button></div>
+					<fieldset class="fieldset" data-secbody="${si}"${hasCustom ? '' : ' hidden'}><legend>${esc(s.legend)}</legend>${body}</fieldset>`;
+				}
+				return `<fieldset class="fieldset"><legend>${esc(s.legend)}</legend>${body}</fieldset>`;
+			}
+			if (s.isDhcpRangeSection) {
+				const hasDhcp = node && node.attrs && Array.isArray(node.attrs.dhcpRanges) && node.attrs.dhcpRanges.length > 0;
+				let rowsHtml = "";
+				if (hasDhcp) {
+					for (const rangeStr of node.attrs.dhcpRanges) {
+						rowsHtml += `
+						<div class="field full dhcp-range-row">
+							<label>
+								DHCP RANGE
+								<button type="button" class="field-x remove-dhcp-range-btn custom-remove-btn" tabindex="-1">remove</button>
+							</label>
+							<input type="text" placeholder="e.g. 10.0.10.1 - 10.0.10.100" data-dhcp-range-val value="${esc(rangeStr)}" class="dhcp-range-input">
+						</div>`;
+					}
+				} else {
+					rowsHtml += `
+						<div class="field full dhcp-range-row">
+							<label>
+								DHCP RANGE
+								<button type="button" class="field-x remove-dhcp-range-btn custom-remove-btn" tabindex="-1">remove</button>
+							</label>
+							<input type="text" placeholder="e.g. 10.0.10.1 - 10.0.10.100" data-dhcp-range-val class="dhcp-range-input">
+						</div>`;
+				}
+				const body = `<div class="subrows dhcp-range-rows">${rowsHtml}</div>
+				<div class="addfield-menu addfield-chips"><sg-chip class="chip-add add-dhcp-range-btn custom-add-btn" label="dhcp range"></sg-chip></div>`;
+				if (s.adder) {
+					return `<div class="section-adder" data-sec="${si}"${hasDhcp ? ' hidden' : ''}><button type="button">＋ ${esc(s.legend)}</button></div>
+					<fieldset class="fieldset" data-secbody="${si}"${hasDhcp ? '' : ' hidden'}><legend>${esc(s.legend)}</legend>${body}</fieldset>`;
 				}
 				return `<fieldset class="fieldset"><legend>${esc(s.legend)}</legend>${body}</fieldset>`;
 			}
@@ -107,15 +170,13 @@ function openEditorForm({
 				.map((f) => fieldHtml(f, false))
 				.join("")}${openChips.map((f) => fieldHtml(f, true)).join("")}</div>
       <div class="addfield-menu addfield-chips">${closedChips.map((f) => `<sg-chip class="chip-add" data-chip="${f.key}" label="${esc(f.chipLabel || f.label)}"></sg-chip>`).join("")}</div>`;
-			if (
-				s.adder &&
-				!openChips.length &&
-				!(s.fields || []).some(
-					(f) => f.value !== undefined && f.value !== "" && f.value !== null,
-				)
-			)
-				return `<div class="section-adder" data-sec="${si}"><button type="button">＋ ${esc(s.legend)}</button></div>
-        <fieldset class="fieldset" data-secbody="${si}" hidden><legend>${esc(s.legend)} <button type="button" class="legend-x" data-secx="${si}">remove</button></legend>${body}</fieldset>`;
+			const isEmpty = !openChips.length && !(s.fields || []).some(
+				(f) => f.value !== undefined && f.value !== "" && f.value !== null,
+			);
+			if (s.adder) {
+				return `<div class="section-adder" data-sec="${si}"${isEmpty ? '' : ' hidden'}><button type="button">＋ ${esc(s.legend)}</button></div>
+				<fieldset class="fieldset" data-secbody="${si}"${isEmpty ? ' hidden' : ''}><legend>${esc(s.legend)} <button type="button" class="legend-x" data-secx="${si}">remove</button></legend>${body}</fieldset>`;
+			}
 			return `<fieldset class="fieldset"><legend>${esc(s.legend)}</legend>${body}</fieldset>`;
 		})
 		.join("");
@@ -167,21 +228,66 @@ function openEditorForm({
 		
 		const remCustom = ev.target.closest(".remove-custom-field-btn");
 		if (remCustom) {
-			remCustom.closest(".custom-field-row").remove();
+			const row = remCustom.closest(".custom-field-row");
+			const rowsContainer = row.closest(".custom-fields-rows");
+			if (rowsContainer.children.length <= 1) {
+				row.querySelector("[data-custom-key]").value = "";
+				row.querySelector("[data-custom-val]").value = "";
+				const fieldset = rowsContainer.closest("fieldset");
+				fieldset.hidden = true;
+				const si = fieldset.dataset.secbody;
+				fieldset.closest(".modal").querySelector(`[data-sec="${si}"]`).hidden = false;
+			} else {
+				row.remove();
+			}
 			return;
 		}
 		const addCustom = ev.target.closest(".add-custom-field-btn");
 		if (addCustom) {
 			const rowsContainer = addCustom.closest("fieldset").querySelector(".custom-fields-rows");
 			const row = document.createElement("div");
-			row.className = "port-row custom-field-row";
+			row.className = "field full custom-field-row";
 			row.innerHTML = `
-			<input type="text" placeholder="Key" data-custom-key class="custom-key-input">
+			<label>
+				<input type="text" placeholder="KEY" data-custom-key class="custom-key-input" style="all: unset; width: 100%; cursor: text; text-transform: uppercase; color: inherit; font-size: inherit; letter-spacing: inherit;">
+				<button type="button" class="field-x remove-custom-field-btn custom-remove-btn" tabindex="-1">remove</button>
+			</label>
 			<input type="text" placeholder="Value" data-custom-val class="custom-val-input">
-			<button type="button" class="mini red remove-custom-field-btn custom-remove-btn">remove</button>
 			`;
 			rowsContainer.appendChild(row);
 			row.querySelector("[data-custom-key]").focus();
+			return;
+		}
+
+		const remDhcp = ev.target.closest(".remove-dhcp-range-btn");
+		if (remDhcp) {
+			const row = remDhcp.closest(".dhcp-range-row");
+			const rowsContainer = row.closest(".dhcp-range-rows");
+			if (rowsContainer.children.length <= 1) {
+				row.querySelector("[data-dhcp-range-val]").value = "";
+				const fieldset = rowsContainer.closest("fieldset");
+				fieldset.hidden = true;
+				const si = fieldset.dataset.secbody;
+				fieldset.closest(".modal").querySelector(`[data-sec="${si}"]`).hidden = false;
+			} else {
+				row.remove();
+			}
+			return;
+		}
+		const addDhcp = ev.target.closest(".add-dhcp-range-btn");
+		if (addDhcp) {
+			const rowsContainer = addDhcp.closest("fieldset").querySelector(".dhcp-range-rows");
+			const row = document.createElement("div");
+			row.className = "field full dhcp-range-row";
+			row.innerHTML = `
+			<label>
+				DHCP RANGE
+				<button type="button" class="field-x remove-dhcp-range-btn custom-remove-btn" tabindex="-1">remove</button>
+			</label>
+			<input type="text" placeholder="e.g. 10.0.10.1 - 10.0.10.100" data-dhcp-range-val class="dhcp-range-input">
+			`;
+			rowsContainer.appendChild(row);
+			row.querySelector("[data-dhcp-range-val]").focus();
 			return;
 		}
 
@@ -270,6 +376,17 @@ function openEditorForm({
 			}
 			vals[f.key] = v;
 		}
+
+		for (const row of m.querySelectorAll(".custom-field-row")) {
+			const fieldset = row.closest("fieldset");
+			if (fieldset && fieldset.hidden) continue;
+			const key = row.querySelector("[data-custom-key]").value.trim();
+			if (key === "") {
+				showErr("Custom field KEY is empty.");
+				return null;
+			}
+		}
+
 		return vals;
 	};
 	m.querySelector(".fm-go").onclick = () => {
@@ -340,9 +457,15 @@ const notesSection = (nodeType, node, isEdge = false) => ({
 });
 
 const customFieldSection = (node) => ({
-	legend: "Custom Field",
+	legend: "Custom Fields",
 	adder: true,
 	isCustomFieldSection: true,
+});
+
+const dhcpRangeSection = (node) => ({
+	legend: "DHCP Ranges",
+	adder: true,
+	isDhcpRangeSection: true,
 });
 
 const vlanChoices = () => {
@@ -363,6 +486,8 @@ const collectAttrs = (vals, o) => {
 	if (o) {
 		const custom = collectCustomAttrs(o);
 		if (custom !== undefined) a.custom = custom;
+		const dhcp = collectDhcpRanges(o);
+		if (dhcp !== undefined) a.dhcpRanges = dhcp;
 	}
 	return a;
 };
@@ -833,13 +958,16 @@ function prefixEditor(node) {
 					attrField("prefix", "description", node, false),
 					attrField("prefix", "vlanId", node, false),
 				],
-				chips: attrFieldsFor(
-					"prefix",
-					node,
-					["gatewayIp", "dhcpStart", "dhcpEnd"],
-					false,
-				),
+				chips: [
+					...attrFieldsFor(
+						"prefix",
+						node,
+						["gatewayIp"],
+						false,
+					)
+				],
 			},
+			dhcpRangeSection(node),
 			notesSection("prefix", node),
 			customFieldSection(node)
 		],
@@ -911,7 +1039,7 @@ function portEditor(devId, iface) {
 						iface && iface.attrs[k] !== undefined
 							? String(iface.attrs[k])
 							: undefined,
-					help: "known VLANs — from IPAM prefixes and ports in use",
+					help: "known VLANs — from IPAM prefixes",
 				}
 			: {
 					...base,
@@ -1214,7 +1342,7 @@ function connectForm(fixedA, preDevId = null) {
 	const fixedDev = fixedA ? nodeById(ownerOf(fixedA)) : null;
 	const o = openEditorForm({
 		title: "New connection",
-		meta: "Pick each device, then one of its free ports. One cable per port.",
+		meta: "Link two devices. Port order can be swapped after saving.",
 		submitLabel: "Connect",
 		sections: [
 			{
@@ -1632,7 +1760,7 @@ function deviceEditor(node, presetLoc, presetClone) {
 		title: isNew ? "Add device" : `Edit device — ${node.name}`,
 		meta: node
 			? node.id
-			: "A port and cable can be created right here — interface records are handled for you.",
+			: "A port is generated for endpoints by default and can be edited after saving.",
 		wide: true,
 		sections,
 		historyOf: node?.id,

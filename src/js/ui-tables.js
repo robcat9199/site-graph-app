@@ -25,11 +25,7 @@ function renderDevices(content) {
 	].sort();
 	const shown = applyCap(rows);
 	content.innerHTML = `<div class="table-pad">
-    <div class="stat-strip">
-      <span><b>${all.length}</b> devices</span>
-      <button class="${unplaced.length ? "warn" : ""}" id="statUnplaced" title="Toggle unplaced filter"><b>${unplaced.length}</b> unplaced</button>
-      <button class="${unconnected.length ? "warn" : ""}" id="statUnconn" title="Toggle no-connection filter"><b>${unconnected.length}</b> with no connection</button>
-    </div>
+    <div class="section-title section-title--gap">All Devices (${all.length}) <span class="count-note">· ${unplaced.length} unplaced · ${unconnected.length} with no connection</span><span class="line"></span></div>
     <div class="filters-row">
       <select class="filter filter-role" id="fRole"><option value="">All roles</option>${ENUMS.role.map((r) => `<option${filters.role === r ? " selected" : ""}>${r}</option>`).join("")}</select>
       <select class="filter" id="fDept"><option value="">All departments</option>${depts.map((d) => `<option${filters.dept === d ? " selected" : ""}>${esc(d)}</option>`).join("")}</select>
@@ -68,16 +64,6 @@ function renderDevices(content) {
 			renderAll();
 		};
 	}
-	$("#statUnplaced").onclick = () => {
-		filters.unplaced = !filters.unplaced;
-		persistUI();
-		renderAll();
-	};
-	$("#statUnconn").onclick = () => {
-		filters.unconnected = !filters.unconnected;
-		persistUI();
-		renderAll();
-	};
 }
 
 function renderLocations(content) {

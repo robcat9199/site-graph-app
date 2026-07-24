@@ -200,3 +200,7 @@ textarea {
 		height: 100vh !important;
 	}
 }
+
+body.no-scroll {
+	overflow: hidden !important;
+}

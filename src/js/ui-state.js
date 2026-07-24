@@ -103,8 +103,10 @@ function fmtRel(iso) {
 /* ---------- overlay stack (supports editor → confirm/history on top) ---------- */
 let lastFocus = null;
 function openOverlay(html, wide) {
-	if (!document.querySelector(".overlay.open"))
+	if (!document.querySelector(".overlay.open")) {
 		lastFocus = document.activeElement;
+		document.body.classList.add("no-scroll");
+	}
 	const o = document.createElement("div");
 	o.className = "overlay open";
 	o.innerHTML = `<div class="modal${wide ? " wide" : ""}" role="dialog" aria-modal="true"><button type="button" class="modal-x" data-close aria-label="Close" title="Close">✕</button>${html}</div>`;
@@ -124,10 +126,13 @@ function openOverlay(html, wide) {
 function closeOverlay(o) {
 	o.remove();
 	const rest = document.querySelectorAll(".overlay.open");
-	if (!rest.length && lastFocus && lastFocus.focus) {
-		try {
-			lastFocus.focus();
-		} catch (e) {}
+	if (!rest.length) {
+		document.body.classList.remove("no-scroll");
+		if (lastFocus && lastFocus.focus) {
+			try {
+				lastFocus.focus();
+			} catch (e) {}
+		}
 	}
 }
 function closeTopOverlay() {
@@ -729,7 +734,7 @@ const COLS = {
 		{ key: "loc", label: "Location", get: (n) => locationOf(n.id)?.name || "" },
 		{
 			key: "uses",
-			label: "Person",
+			label: "Devices",
 			get: (n) =>
 				inE(n.id, "used_by")
 					.map((e) => nodeById(e.from).name)
@@ -773,11 +778,11 @@ const COLS = {
 		{
 			key: "dhcp",
 			label: "DHCP pool",
-			get: (n) => n.attrs.dhcpStart || "",
-			render: (n) =>
-				n.attrs.dhcpStart
-					? html`<span class="mono">${n.attrs.dhcpStart} – ${n.attrs.dhcpEnd || "?"}</span>`
-					: '<span class="dim">—</span>',
+			get: (n) => (n.attrs.dhcpRanges && n.attrs.dhcpRanges.length) ? n.attrs.dhcpRanges[0] : "",
+			render: (n) => {
+				if (!n.attrs.dhcpRanges || !n.attrs.dhcpRanges.length) return '<span class="dim">—</span>';
+				return html`<span class="mono">${n.attrs.dhcpRanges.map(r => r.replace("-", "–")).join(", ")}</span>`;
+			}
 		},
 		{
 			key: "used",

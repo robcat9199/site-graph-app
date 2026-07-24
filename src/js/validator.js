@@ -34,6 +34,12 @@ function checkAttrVal(spec, v) {
 					return `custom attribute "${ck}" must be a string, number, or boolean`;
 			}
 			return null;
+		case "array":
+			if (!Array.isArray(v)) return "must be an array";
+			for (const item of v) {
+				if (typeof item !== "string") return "array items must be strings";
+			}
+			return null;
 		default:
 			return "unknown spec";
 	}
@@ -139,19 +145,28 @@ export function validateDoc(doc) {
 					`${w}: "${n.name}" has host bits set — network address is ${intToIp4(c.net)}/${c.bits}`,
 				);
 			else if (isPlainObj(n.attrs)) {
-				for (const k of ["gatewayIp", "dhcpStart", "dhcpEnd"])
-					if (
-						typeof n.attrs[k] === "string" &&
-						isIp4(n.attrs[k]) &&
-						!cidrHasHost(c, ip4ToInt(n.attrs[k]))
-					)
-						errs.push(`${w}: attr "${k}" (${n.attrs[k]}) is outside ${n.name}`);
 				if (
-					isIp4(n.attrs.dhcpStart) &&
-					isIp4(n.attrs.dhcpEnd) &&
-					ip4ToInt(n.attrs.dhcpStart) > ip4ToInt(n.attrs.dhcpEnd)
-				)
-					errs.push(`${w}: dhcpStart is after dhcpEnd`);
+					typeof n.attrs.gatewayIp === "string" &&
+					isIp4(n.attrs.gatewayIp) &&
+					!cidrHasHost(c, ip4ToInt(n.attrs.gatewayIp))
+				) {
+					errs.push(`${w}: attr "gatewayIp" (${n.attrs.gatewayIp}) is outside ${n.name}`);
+				}
+				if (Array.isArray(n.attrs.dhcpRanges)) {
+					for (let i = 0; i < n.attrs.dhcpRanges.length; i++) {
+						const parts = String(n.attrs.dhcpRanges[i]).split("-").map((p) => p.trim());
+						if (parts.length !== 2 || !isIp4(parts[0]) || !isIp4(parts[1])) {
+							errs.push(`${w}: dhcpRanges[${i}] must be formatted as 'IP - IP'`);
+							continue;
+						}
+						if (!cidrHasHost(c, ip4ToInt(parts[0])))
+							errs.push(`${w}: dhcpRanges[${i}] start (${parts[0]}) is outside ${n.name}`);
+						if (!cidrHasHost(c, ip4ToInt(parts[1])))
+							errs.push(`${w}: dhcpRanges[${i}] end (${parts[1]}) is outside ${n.name}`);
+						if (ip4ToInt(parts[0]) > ip4ToInt(parts[1]))
+							errs.push(`${w}: dhcpRanges[${i}] start is after end`);
+					}
+				}
 			}
 		}
 		if (T.nameRule === "ipv4" && !isIp4(n.name))

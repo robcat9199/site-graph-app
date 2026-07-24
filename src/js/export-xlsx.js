@@ -188,8 +188,7 @@ function denormalizeSiteGraph(doc) {
 			'Description': node.attrs?.description || '',
 			'VLAN ID': node.attrs?.vlanId || '',
 			'Gateway IP': node.attrs?.gatewayIp || '',
-			'DHCP Start': node.attrs?.dhcpStart || '',
-			'DHCP End': node.attrs?.dhcpEnd || '',
+			'DHCP Ranges': node.attrs?.dhcpRanges ? node.attrs.dhcpRanges.join(", ") : '',
 			'Subnet Membership': parentPrefix ? parentPrefix.name : '',
 			'Assigned Device': assignedTo,
 			'Notes': node.attrs?.notes || ''

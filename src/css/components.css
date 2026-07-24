@@ -144,12 +144,7 @@ tbody tr:nth-child(even) td:first-child {
 	margin-bottom: 0.75rem;
 	flex-wrap: nowrap;
 	align-items: center;
-	overflow-x: auto;
-	scrollbar-width: none;
-	-webkit-overflow-scrolling: touch;
-}
-.filters-row::-webkit-scrollbar {
-	display: none;
+	overflow: visible;
 }
 .filters-row > * {
 	flex-shrink: 0;
@@ -180,6 +175,7 @@ label.filter {
 	margin: 1.25rem 0 0.5rem;
 	display: flex;
 	align-items: center;
+	white-space: nowrap;
 	gap: 0.625rem;
 }
 .section-title:first-child {
@@ -288,6 +284,16 @@ label.filter {
 	overflow-y: auto;
 	z-index: 80;
 }
+.overlay::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1px;
+	height: calc(100% + 1px);
+	pointer-events: none;
+	z-index: -1;
+}
 .overlay.open {
 	display: flex;
 }
@@ -323,7 +329,7 @@ label.filter {
 	max-width: 38.75rem;
 	padding: 1.375rem;
 	box-shadow: 0.3125rem 0.3125rem 0 oklch(20% var(--c-neutral) var(--h-neutral) / 0.15);
-	margin-bottom: 2.25rem;
+	margin: auto;
 
 	&.wide {
 		max-width: 48.75rem;
@@ -441,6 +447,11 @@ label.filter {
 		text-transform: none;
 		letter-spacing: 0;
 	}
+}
+.dhcp-inputs {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.5rem;
 }
 .field-x {
 	background: none;

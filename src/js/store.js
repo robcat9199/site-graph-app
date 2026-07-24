@@ -574,11 +574,11 @@ export const SAMPLE = (() => {
 	nodes.push(
 		nn("pfx-mgmt", "prefix", "10.0.0.0/24", { description: "HQ Management", vlanId: 10, gatewayIp: "10.0.0.1" }),
 		nn("pfx-servers", "prefix", "10.0.10.0/24", { description: "HQ Servers", vlanId: 20, gatewayIp: "10.0.10.1" }),
-		nn("pfx-users", "prefix", "10.0.20.0/24", { description: "HQ Users", vlanId: 30, gatewayIp: "10.0.20.1", dhcpStart: "10.0.20.100", dhcpEnd: "10.0.20.200" }),
-		nn("pfx-voice", "prefix", "10.0.30.0/24", { description: "HQ Voice", vlanId: 40, gatewayIp: "10.0.30.1", dhcpStart: "10.0.30.100", dhcpEnd: "10.0.30.200" }),
+		nn("pfx-users", "prefix", "10.0.20.0/24", { description: "HQ Users", vlanId: 30, gatewayIp: "10.0.20.1", dhcpRanges: ["10.0.20.100 - 10.0.20.200"] }),
+		nn("pfx-voice", "prefix", "10.0.30.0/24", { description: "HQ Voice", vlanId: 40, gatewayIp: "10.0.30.1", dhcpRanges: ["10.0.30.100 - 10.0.30.200"] }),
 		
 		nn("pfx-branch-mgmt", "prefix", "10.1.0.0/24", { description: "Branch Management", vlanId: 100, gatewayIp: "10.1.0.1" }),
-		nn("pfx-branch-users", "prefix", "10.1.10.0/24", { description: "Branch Users", vlanId: 110, gatewayIp: "10.1.10.1", dhcpStart: "10.1.10.100", dhcpEnd: "10.1.10.200" })
+		nn("pfx-branch-users", "prefix", "10.1.10.0/24", { description: "Branch Users", vlanId: 110, gatewayIp: "10.1.10.1", dhcpRanges: ["10.1.10.100 - 10.1.10.200"] })
 	);
 
 	/* -------- IPAM: ADDRESSES -------- */
@@ -652,7 +652,7 @@ export const SAMPLE = (() => {
 
 	/* -------- INTENTIONAL WARNINGS -------- */
 	nodes.push(
-		nn("pfx-guest", "prefix", "10.0.99.0/24", { description: "HQ Guest Wi-Fi", vlanId: 99, gatewayIp: "10.0.99.1", dhcpStart: "10.0.99.100", dhcpEnd: "10.0.99.200" })
+		nn("pfx-guest", "prefix", "10.0.99.0/24", { description: "HQ Guest Wi-Fi", vlanId: 99, gatewayIp: "10.0.99.1", dhcpRanges: ["10.0.99.100 - 10.0.99.200"] })
 	);
 
 	return {
