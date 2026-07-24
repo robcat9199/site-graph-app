@@ -144,6 +144,8 @@ textarea,
 html {
 	background: var(--surface);
 	transition: background 0.1s ease, color 0.1s ease;
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
 }
 body {
 	margin: 0;

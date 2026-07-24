@@ -740,7 +740,7 @@ function stdSubmit(type, node, extras) {
 function locationEditor(node) {
 	openEditorForm({
 		title: node ? `Edit location — ${node.name}` : "Add location",
-		meta: node ? node.id : "Locations nest: site → department → room.",
+		meta: node ? node.id : "Locations can nest: e.g. site → department → room.",
 		sections: [
 			{
 				legend: "Location",
@@ -810,9 +810,9 @@ function patchPanelEditor(node) {
 	let o; /* assigned below; onSubmit runs after assignment */
 	o = openEditorForm({
 		title: node ? `Edit patch panel — ${node.name}` : "Add patch panel",
-		meta: node
+		/*meta: node
 			? node.id
-			: "Passive filler — jacks land here. Cables are documented on the devices they connect.",
+			: "Passive filler — jacks land here. Cables are documented on the devices they connect.",*/
 		sections: [
 			{
 				legend: "Patch panel",
@@ -896,7 +896,7 @@ function personEditor(node) {
 function circuitEditor(node) {
 	openEditorForm({
 		title: node ? `Edit circuit — ${node.name}` : "Add circuit",
-		meta: node ? node.id : "A WAN/voice service delivered by a provider.",
+		/*meta: node ? node.id : "A WAN/voice service delivered by a provider.",*/
 		sections: [
 			{
 				legend: "Circuit",
@@ -942,7 +942,7 @@ function circuitEditor(node) {
 function prefixEditor(node) {
 	openEditorForm({
 		title: node ? `Edit prefix — ${node.name}` : "Add prefix",
-		meta: "Network address — host bits must be zero (10.0.10.0/24, not .1/24).",
+		meta: "Host bits must be zero (10.0.10.0/24, not .1/24).",
 		sections: [
 			{
 				legend: "Network",
@@ -1342,7 +1342,7 @@ function connectForm(fixedA, preDevId = null) {
 	const fixedDev = fixedA ? nodeById(ownerOf(fixedA)) : null;
 	const o = openEditorForm({
 		title: "New connection",
-		meta: "Link two devices. Port order can be swapped after saving.",
+		meta: "Link devices together. Port order can be swapped after saving.",
 		submitLabel: "Connect",
 		sections: [
 			{
@@ -1760,7 +1760,7 @@ function deviceEditor(node, presetLoc, presetClone) {
 		title: isNew ? "Add device" : `Edit device — ${node.name}`,
 		meta: node
 			? node.id
-			: "A port is generated for endpoints by default and can be edited after saving.",
+			: "A port is generated for endpoints by default, eth0 can be edited after saving.",
 		wide: true,
 		sections,
 		historyOf: node?.id,
